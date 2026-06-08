@@ -1,4 +1,5 @@
 import { useState, FormEvent } from "react";
+import { supabase } from "./supabaseClient";
 import { 
   Phone, 
   Mail, 
@@ -26,6 +27,11 @@ export default function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [activeSituation, setActiveSituation] = useState<string | null>(null);
+  const [supabaseLoading, setSupabaseLoading] = useState(false);
+  const [supabaseError, setSupabaseError] = useState<string | null>(null);
+  const [showSqlGuide, setShowSqlGuide] = useState(false);
+  const [copysuccess, setCopySuccess] = useState(false);
+
   const [formData, setFormData] = useState({
     naam: "",
     email: "",
@@ -34,21 +40,85 @@ export default function App() {
     bericht: ""
   });
 
-  const handleFormSubmit = (e: FormEvent) => {
+
+  const sqlSetupCode = `create table contact_requests (
+  id uuid default gen_random_uuid() primary key,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  naam text not null,
+  email text not null,
+  telefoon text,
+  type_ondernemer text,
+  bericht text
+);
+
+-- Activeer Row Level Security (RLS)
+alter table contact_requests enable row level security;
+
+-- Sta openbare (anonieme) inserts toe
+create policy "Allow anonymous inserts" 
+on contact_requests 
+for insert 
+to anon 
+with check (true);`;
+
+  const handleFormSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    // Simulate premium visual feedback on submission
-    setFormSubmitted(true);
-    setTimeout(() => {
-      setFormSubmitted(false);
-      setFormData({
-        naam: "",
-        email: "",
-        telefoon: "",
-        type_ondernemer: "Ik ben zzp’er",
-        bericht: ""
-      });
-    }, 5000);
+    setSupabaseLoading(true);
+    setSupabaseError(null);
+
+    try {
+      // Insertion into the contact_requests table in Supabase
+      const { error } = await supabase
+        .from("contact_requests")
+        .insert([
+          {
+            naam: formData.naam,
+            email: formData.email,
+            telefoon: formData.telefoon,
+            type_ondernemer: formData.type_ondernemer,
+            bericht: formData.bericht,
+          }
+        ]);
+
+      if (error) {
+        console.error("Supabase Error detail:", error);
+        // Catch 42P01 (relation does not exist) or other common missing table errors
+        if (
+          error.code === "42P01" || 
+          error.message?.includes("relation") || 
+          error.message?.includes("does not exist") ||
+          (error as any).status === 404
+        ) {
+          setSupabaseError("De tabel 'contact_requests' bestaat nog niet in je Supabase database. Geen zorgen! Klik hieronder om de SQL-code te bekijken die je direct in Supabase kunt plakken.");
+          setShowSqlGuide(true);
+        } else {
+          setSupabaseError(`Supabase Foutbericht: ${error.message} (${error.code || 'Geen code'})`);
+        }
+      } else {
+        // Successful insert
+        setFormSubmitted(true);
+        setFormData({
+          naam: "",
+          email: "",
+          telefoon: "",
+          type_ondernemer: "Ik ben zzp’er",
+          bericht: ""
+        });
+      }
+    } catch (err: any) {
+      console.error("Unexpected error submitting to Supabase:", err);
+      setSupabaseError(`Er is een onverwachte fout opgetreden: ${err?.message || err}`);
+    } finally {
+      setSupabaseLoading(false);
+    }
   };
+
+  const copySqlToClipboard = () => {
+    navigator.clipboard.writeText(sqlSetupCode);
+    setCopySuccess(true);
+    setTimeout(() => setCopySuccess(false), 3000);
+  };
+
 
   return (
     <div className="min-h-screen flex flex-col font-sans antialiased text-corporate-dark bg-white selection:bg-primary-blue/10 selection:text-primary-blue">
@@ -702,7 +772,7 @@ export default function App() {
             </article>
 
             {/* ZZP Plan (Featured, Orange CTA button) */}
-            <article className="price_card bg-white border-2 border-primary-blue p-8 rounded-[6px] shadow-[0_20px_50px_rgba(0,4,158,0.06)] hover:shadow-[0_25px_60px_rgba(0,4,158,0.1)] transition-all duration-200 flex flex-col h-full justify-between relative" id="zzp">
+            <article className="price_card bg-white border-2 border-primary-blue p-8 rounded-[6px] shadow-[0_20px_50px_rgba(17,27,72,0.06)] hover:shadow-[0_25px_60px_rgba(17,27,72,0.1)] transition-all duration-200 flex flex-col h-full justify-between relative" id="zzp">
               <div className="badge absolute -top-[14px] left-1/2 -translate-x-1/2 bg-primary-blue text-white text-[10px] tracking-widest uppercase font-extrabold px-3 py-1 rounded-[4px]">
                 Populair
               </div>
@@ -1018,14 +1088,86 @@ export default function App() {
                   ></textarea>
                 </div>
 
+                {/* Supabase connection guide and error management */}
+                {supabaseError && (
+                  <div className="p-4 bg-amber-50 border border-amber-200 rounded-[4px] text-amber-800 text-sm flex flex-col gap-2">
+                    <p className="font-semibold flex items-center gap-1.5 text-[14px]">
+                      <span>⚠️ {supabaseError}</span>
+                    </p>
+                    <div className="flex flex-wrap gap-4 mt-1 border-t border-amber-200/55 pt-2">
+                      <button 
+                        type="button" 
+                        onClick={() => setShowSqlGuide(!showSqlGuide)} 
+                        className="text-primary-blue hover:underline text-xs font-extrabold uppercase tracking-wider"
+                      >
+                        {showSqlGuide ? "Verberg SQL" : "Toon SQL Setup Instructies"}
+                      </button>
+                      <button 
+                        type="button" 
+                        onClick={() => {
+                          setFormSubmitted(true);
+                          setFormData({ naam: "", email: "", telefoon: "", type_ondernemer: "Ik ben zzp’er", bericht: "" });
+                          setSupabaseError(null);
+                        }}
+                        className="text-emerald-700 hover:underline text-xs font-extrabold uppercase tracking-wider ml-auto"
+                      >
+                        Bypass en Test Success UI
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {showSqlGuide && (
+                  <div className="p-4 bg-slate-900 text-slate-100 rounded-[4px] text-xs font-mono relative overflow-hidden flex flex-col gap-3">
+                    <div className="flex justify-between items-center text-[10px] text-slate-400 uppercase tracking-widest border-b border-light-slate pb-2">
+                      <span>Plak dit in de Supabase SQL Editor</span>
+                      <button 
+                        type="button" 
+                        onClick={copySqlToClipboard}
+                        className="px-2.5 py-1 bg-white/10 hover:bg-white/20 text-white rounded transition-colors text-[10px] font-bold"
+                      >
+                        {copysuccess ? "Gekopieerd! ✔" : "Kopieer SQL"}
+                      </button>
+                    </div>
+                    <pre className="overflow-x-auto max-h-[160px] whitespace-pre p-2 bg-slate-950/80 rounded leading-normal text-[11px] text-slate-300">
+                      {sqlSetupCode}
+                    </pre>
+                  </div>
+                )}
+
                 {/* Submit action in full accent-orange conversion-focused palette */}
                 <button 
                   type="submit" 
-                  className="w-full py-4 bg-accent-orange text-white hover:bg-[#e0893a] transition-all duration-200 rounded-[4px] font-extrabold text-[15px] uppercase tracking-wider shadow-md hover:shadow-lg active:translate-y-0.5 cursor-pointer form_btn min-h-[48px] flex items-center justify-center"
+                  disabled={supabaseLoading}
+                  className={`w-full py-4 bg-accent-orange text-white hover:bg-[#e0893a] transition-all duration-200 rounded-[4px] font-extrabold text-[15px] uppercase tracking-wider shadow-md hover:shadow-lg active:translate-y-0.5 cursor-pointer form_btn min-h-[48px] flex items-center justify-center gap-2 ${supabaseLoading ? "cursor-not-allowed opacity-80" : ""}`}
                 >
-                  Verstuur aanvraag
+                  {supabaseLoading ? (
+                    <>
+                      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Verwerken naar Supabase...
+                    </>
+                  ) : "Verstuur aanvraag"}
                 </button>
+
+                {/* Beautiful active Supabase link notice */}
+                <div className="flex items-center justify-between mt-1 pt-3 border-t border-slate-100 text-[11px] text-slate-400 select-none">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    Geïntegreerd met Supabase (ID: <code className="bg-slate-50 px-1 py-0.5 rounded font-mono text-[10px]">jghvkukr...</code>)
+                  </div>
+                  <button 
+                    type="button" 
+                    onClick={() => setShowSqlGuide(!showSqlGuide)} 
+                    className="text-primary-blue hover:underline font-semibold"
+                  >
+                    SQL Setup Code
+                  </button>
+                </div>
               </form>
+
             )}
           </div>
 
