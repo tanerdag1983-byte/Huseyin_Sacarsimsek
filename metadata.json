@@ -1,0 +1,6 @@
+{
+  "name": "Sacar Simsek Finance",
+  "description": "Boekhouding, administratie en fiscaal advies voor ondernemers, zzp'ers en starters.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
