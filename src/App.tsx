@@ -20,7 +20,8 @@ import {
   Percent,
   Briefcase,
   Building,
-  Rocket
+  Rocket,
+  Palette
 } from "lucide-react";
 
 export default function App() {
@@ -31,6 +32,20 @@ export default function App() {
   const [supabaseError, setSupabaseError] = useState<string | null>(null);
   const [showSqlGuide, setShowSqlGuide] = useState(false);
   const [copysuccess, setCopySuccess] = useState(false);
+
+  const [isTealBeige, setIsTealBeige] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("sacar_finance_theme") === "teal-beige";
+    }
+    return false;
+  });
+
+  const handleThemeToggle = (value: boolean) => {
+    setIsTealBeige(value);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("sacar_finance_theme", value ? "teal-beige" : "midnight");
+    }
+  };
 
   const [formData, setFormData] = useState({
     naam: "",
@@ -121,10 +136,10 @@ with check (true);`;
 
 
   return (
-    <div className="min-h-screen flex flex-col font-sans antialiased text-corporate-dark bg-white selection:bg-primary-blue/10 selection:text-primary-blue">
+    <div className={`min-h-screen flex flex-col font-sans antialiased text-corporate-dark bg-white selection:bg-primary-blue/10 selection:text-primary-blue transition-all duration-300 ${isTealBeige ? "theme-teal-beige" : "theme-midnight"}`}>
       
       {/* 1. TOP BAR */}
-      <div className="bg-primary-blue text-white text-[13px] py-2.5 relative z-50 border-b border-white/5 shadow-sm">
+      <div className="bg-primary-blue text-white text-[13px] py-2.5 relative z-50 border-b border-white/5 shadow-sm transition-colors duration-305">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row justify-between items-center gap-2">
           <div className="flex items-center gap-2 text-white/95 font-medium">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
@@ -136,29 +151,29 @@ with check (true);`;
               <span>Bel ons: 010 000 00 00</span>
             </a>
             <span className="text-white/20">|</span>
-            <a href="mailto:info@sacarsimsekfinance.nl" className="flex items-center gap-1.5 hover:text-white transition-colors duration-150">
+            <a href="mailto:info@commend.nl" className="flex items-center gap-1.5 hover:text-white transition-colors duration-150">
               <Mail className="w-3.5 h-3.5 text-accent-orange" />
-              <span>info@sacarsimsekfinance.nl</span>
+              <span>info@commend.nl</span>
             </a>
           </div>
         </div>
       </div>
 
       {/* 2. HEADER & NAVIGATION */}
-      <header className="sticky top-0 z-40 bg-white border-b border-slate-100 shadow-[0_2px_15px_-4px_rgba(15,23,42,0.04)] backdrop-blur-md bg-white/95">
+      <header className="sticky top-0 z-40 bg-white border-b border-slate-100 shadow-[0_2px_15px_-4px_rgba(15,23,42,0.04)] backdrop-blur-md bg-white/95 transition-all duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 nav flex h-20 items-center justify-between gap-4">
           <a href="/" className="logo group flex flex-col justify-center select-none" id="logo-top">
-            <span className="text-xl sm:text-2xl font-extrabold tracking-tight text-primary-blue group-hover:opacity-95 transition-all duration-200 uppercase">
-              SACAR SIMSEK <span className="text-corporate-dark">FINANCE</span>
+            <span className="text-xl sm:text-2xl font-extrabold tracking-tight text-primary-blue group-hover:opacity-95 transition-all duration-200 lowercase">
+              commend <span className="text-corporate-dark font-normal text-[14px] sm:text-[16px] tracking-normal normal-case">administratie & advies</span>
             </span>
             <span className="text-[11px] tracking-wider uppercase text-slate-grey group-hover:text-primary-blue transition-colors duration-200 mt-0.5 font-bold flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-accent-orange"></span>
-              Administratie en fiscaal advies
+              Fiscaal advies & financiële rust
             </span>
           </a>
 
           {/* Crawlable Desktop Nav */}
-          <nav className="menu hidden md:flex items-center gap-7 text-[14px] font-semibold text-slate-grey">
+          <nav className="menu hidden lg:flex items-center gap-7 text-[14px] font-semibold text-slate-grey">
             <a href="#diensten" className="hover:text-primary-blue transition-all py-2 relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-primary-blue hover:after:w-full after:transition-all after:duration-200">Diensten</a>
             <a href="#werkwijze" className="hover:text-primary-blue transition-all py-2 relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-primary-blue hover:after:w-full after:transition-all after:duration-200">Werkwijze</a>
             <a href="#tarieven" className="hover:text-primary-blue transition-all py-2 relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-primary-blue hover:after:w-full after:transition-all after:duration-200">Tarieven</a>
@@ -167,29 +182,80 @@ with check (true);`;
           </nav>
 
           {/* Primary Action Call with orange color as requested strictly for CTAs */}
-          <div className="hidden md:flex items-center">
+          <div className="hidden md:flex items-center gap-4">
+            {/* Elegant Segmented theme toggler */}
+            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-full border border-slate-200/60 shadow-inner">
+              <button
+                type="button"
+                onClick={() => handleThemeToggle(false)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all cursor-pointer ${!isTealBeige ? "bg-primary-blue text-white shadow" : "text-slate-600 hover:text-slate-900"}`}
+              >
+                Midnight
+              </button>
+              <button
+                type="button"
+                onClick={() => handleThemeToggle(true)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all cursor-pointer ${isTealBeige ? "bg-primary-blue text-white shadow" : "text-slate-600 hover:text-slate-900"}`}
+              >
+                Teal & Beige
+              </button>
+            </div>
+
             <a 
               href="#contact" 
-              className="px-6 py-3 bg-accent-orange text-white hover:bg-[#e0893a] transition-all duration-200 rounded-[4px] font-semibold text-[14px] shadow-[0_4px_12px_rgba(242,153,74,0.25)] hover:shadow-[0_6px_16px_rgba(242,153,74,0.35)] active:translate-y-px inline-flex items-center justify-center min-h-[48px] tracking-wide"
+              className="px-5 py-3 bg-accent-orange text-white hover:bg-[#e0893a] transition-all duration-200 rounded-[4px] font-semibold text-[13px] shadow-[0_4px_12px_rgba(242,153,74,0.25)] hover:shadow-[0_6px_16px_rgba(242,153,74,0.35)] active:translate-y-px inline-flex items-center justify-center min-h-[44px] tracking-wide"
             >
               Plan kennismaking
             </a>
           </div>
 
-          {/* Toggle Menu Mobile */}
-          <button 
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)} 
-            className="md:hidden p-2 text-corporate-dark hover:text-primary-blue transition-colors focus:outline-none min-w-[48px] min-h-[48px] flex items-center justify-center"
-            aria-label="Toggle menu"
-          >
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
+          {/* Toggle Menu & Theme selector on Mobile */}
+          <div className="md:hidden flex items-center gap-2">
+            <button
+              onClick={() => handleThemeToggle(!isTealBeige)}
+              className="flex items-center justify-center p-2 rounded-[4px] border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-all text-[11px] font-bold gap-1 min-h-[40px] px-2.5 cursor-pointer shadow-sm uppercase tracking-wider"
+              title="Wissel van stijl"
+            >
+              <Palette className="w-3.5 h-3.5 text-primary-blue" />
+              <span>{isTealBeige ? "Midnight" : "Teal"}</span>
+            </button>
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)} 
+              className="p-2 text-corporate-dark hover:text-primary-blue transition-colors focus:outline-none min-w-[48px] min-h-[48px] flex items-center justify-center"
+              aria-label="Toggle menu"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
         </div>
 
         {/* Mobile Navigation Panel */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-slate-100 bg-white/98 backdrop-blur-md absolute top-full left-0 w-full shadow-lg py-4 px-6 animate-fadeIn">
+          <div className="md:hidden border-t border-slate-100 bg-white/98 backdrop-blur-md absolute top-full left-0 w-full shadow-lg py-4 px-6 animate-fadeIn z-40">
             <div className="flex flex-col gap-4">
+              {/* Elegant dynamic mobile theme selector */}
+              <div className="py-2.5 border-b border-slate-50 flex flex-col gap-2">
+                <span className="text-[11px] font-bold text-slate-grey uppercase tracking-wider flex items-center gap-1">
+                  <Palette className="w-3.5 h-3.5 text-primary-blue" /> Selecteer stijl / variant:
+                </span>
+                <div className="grid grid-cols-2 gap-2 bg-slate-100 p-1 rounded-md border border-slate-200/50">
+                  <button
+                    type="button"
+                    onClick={() => { handleThemeToggle(false); setMobileMenuOpen(false); }}
+                    className={`py-1.5 px-3 rounded text-xs font-bold uppercase transition-all flex items-center justify-center gap-1 cursor-pointer ${!isTealBeige ? "bg-primary-blue text-white shadow" : "text-slate-600"}`}
+                  >
+                    Sleek Midnight
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { handleThemeToggle(true); setMobileMenuOpen(false); }}
+                    className={`py-1.5 px-3 rounded text-xs font-bold uppercase transition-all flex items-center justify-center gap-1 cursor-pointer ${isTealBeige ? "bg-primary-blue text-white shadow" : "text-slate-600"}`}
+                  >
+                    Warm Teal/Beige
+                  </button>
+                </div>
+              </div>
+
               <a 
                 href="#diensten" 
                 onClick={() => setMobileMenuOpen(false)} 
@@ -249,11 +315,11 @@ with check (true);`;
             <img 
               src="https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=1600&q=80" 
               alt="Boekhouder kantoor achtergrond" 
-              className="w-full h-full object-cover object-center scale-105 filter brightness-100"
+              className="w-full h-full object-cover object-center scale-105 filter brightness-100 opacity-90 transition-opacity duration-300"
               referrerPolicy="no-referrer"
             />
-            {/* Elegant multi-directional Sleek Gradient Layer */}
-            <div className="absolute inset-0 bg-gradient-to-br from-corporate-dark via-[#080d54] to-primary-blue opacity-95"></div>
+            {/* Elegant multi-directional Sleek Gradient Layer with 80% opacity for optimal text readability they requested */}
+            <div className="absolute inset-0 bg-gradient-to-br from-corporate-dark/95 via-primary-blue/82 to-primary-blue/95 opacity-82 transition-all duration-300"></div>
             {/* Subtle grid elements representing financial grids */}
             <div className="absolute inset-0 opacity-5 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:16px_16px]"></div>
           </div>
@@ -269,7 +335,7 @@ with check (true);`;
                 Grip op je administratie en meer rust in je onderneming
               </h1>
               <p className="text-lg sm:text-xl text-slate-100/90 leading-relaxed max-w-2xl mb-8">
-                Sacar Simsek Finance helpt ondernemers met duidelijke administratie,
+                Commend helpt ondernemers met duidelijke administratie,
                 fiscaal advies en financieel inzicht. Zo weet je precies waar je staat
                 en welke keuzes slim zijn voor jouw bedrijf.
               </p>
@@ -555,7 +621,7 @@ with check (true);`;
                     <span className="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
                     <span className="text-xs tracking-wider uppercase text-slate-400 font-bold">MKB Portal Preview</span>
                   </div>
-                  <span className="text-[11px] bg-indigo-500/10 text-indigo-400 border border-indigo-400/20 px-2 py-0.5 rounded">Sacar Simsek</span>
+                  <span className="text-[11px] bg-indigo-500/10 text-indigo-400 border border-indigo-400/20 px-2 py-0.5 rounded">Commend</span>
                 </div>
 
                 {/* Simulated Metric Cards */}
@@ -946,7 +1012,7 @@ with check (true);`;
               Plan een kennismaking
             </h2>
             <p className="text-lg text-slate-100/90 leading-relaxed max-w-xl mb-8">
-              Wil je weten wat Sacar Simsek Finance voor jouw onderneming kan betekenen?
+              Wil je weten wat Commend administratie & advies voor jouw onderneming kan betekenen?
               Vul het formulier in en wij nemen contact met je op.
             </p>
 
@@ -964,7 +1030,7 @@ with check (true);`;
                 <span className="p-2.5 bg-white/10 rounded-[4px] text-accent-orange shrink-0"><Mail className="w-5 h-5" /></span>
                 <div>
                   <span className="text-[11px] tracking-wide uppercase text-slate-300 block mb-1">E mail</span>
-                  <a href="mailto:info@sacarsimsekfinance.nl" className="text-base font-bold hover:text-accent-orange transition-colors duration-150">info@sacarsimsekfinance.nl</a>
+                  <a href="mailto:info@commend.nl" className="text-base font-bold hover:text-accent-orange transition-colors duration-150">info@commend.nl</a>
                 </div>
               </div>
 
@@ -1183,7 +1249,7 @@ with check (true);`;
         <div className="footer_grid flex flex-col md:flex-row justify-between items-start md:items-center gap-8 text-[14px]">
           
           <div className="flex flex-col gap-2">
-            <span className="text-lg font-bold tracking-tight text-white">Sacar Simsek Finance</span>
+            <span className="text-lg font-bold tracking-tight text-white">Commend administratie & advies</span>
             <span className="text-white/60 leading-relaxed max-w-sm">
               Administratie, fiscaal advies en financieel inzicht voor ambitieuze ondernemers.
             </span>
@@ -1192,8 +1258,8 @@ with check (true);`;
           <div className="flex flex-col sm:flex-row gap-8 sm:gap-16">
             <div className="flex flex-col gap-2">
               <span className="font-bold text-white text-[11px] tracking-wider uppercase">Contact Link</span>
-              <a href="mailto:info@sacarsimsekfinance.nl" className="text-slate-300 hover:text-white transition-colors duration-150">info@sacarsimsekfinance.nl</a>
-              <span className="text-slate-400">sacarsimsekfinance.nl</span>
+              <a href="mailto:info@commend.nl" className="text-slate-300 hover:text-white transition-colors duration-150">info@commend.nl</a>
+              <span className="text-slate-400">commend.nl</span>
             </div>
 
             <div className="flex flex-col gap-2">
@@ -1208,9 +1274,9 @@ with check (true);`;
         </div>
 
         <div className="border-t border-white/5 mt-10 pt-8 flex flex-col sm:flex-row justify-between text-xs text-white/40">
-          <span>&copy; {new Date().getFullYear()} Sacar Simsek Finance. Alle rechten voorbehouden.</span>
+          <span>&copy; {new Date().getFullYear()} Commend administratie & advies. Alle rechten voorbehouden.</span>
           <span className="flex items-center gap-1 mt-2 sm:mt-0">
-            <Clock className="w-3 h-3 text-accent-orange" /> Futureproof Finvora Layout 2026
+            <Clock className="w-3 h-3 text-accent-orange" /> Futureproof Commend Layout 2026
           </span>
         </div>
 
